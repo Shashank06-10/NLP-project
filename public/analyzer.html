@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze Scientific Content - SciPhrase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav class="navbar" id="tohome">
+                <a href="./index.html" class="logo">
+                    <i class="fas fa-brain logo-icon"></i>
+                    <h1>SciPhrase</h1>
+                </a>
+                <div class="nav-links">
+                    <a href="./index.html">Home</a>
+                    <a href="" class="active">Analyzer</a>
+                    <a href="#features">Features</a>
+                    <a href="#how-it-works">How It Works</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- <main>
+        <div class="analyzer-container">
+            <div class="analyzer-header">
+                <h1>Scientific Key Phrase Extractor</h1>
+                <p>Extract the most important concepts and terminology from your scientific content</p>
+            </div>
+
+            <div class="analyzer-card" id="input-section">
+                <h2><i class="fas fa-file-alt"></i> Input Scientific Text</h2>
+                <textarea id="scientific-text" placeholder="Paste your scientific text here..."></textarea>
+                <div class="buttons-container">
+                    <div>
+                        <button id="load-sample" class="button secondary-button">
+                            <i class="fas fa-flask"></i> Load Sample
+                        </button>
+                        <button id="clear-text" class="button danger-button">
+                            <i class="fas fa-trash-alt"></i> Clear
+                        </button>
+                    </div>
+                    <button id="analyze-btn" class="button primary-button">
+                        <i class="fas fa-brain"></i> Extract Key Phrases
+                    </button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading-section">
+                <div class="spinner"></div>
+                <p>Analyzing your scientific content...</p>
+            </div>
+
+            <div class="results-container" id="results-section">
+                <div class="results-header">
+                    <h2><i class="fas fa-chart-bar"></i> Analysis Results</h2>
+                    <button id="back-to-input" class="back-button">
+                        <i class="fas fa-arrow-left"></i> Back to Input
+                    </button>
+                </div>
+
+                <div class="stats-card">
+                    <h3><i class="fas fa-chart-pie"></i> Text Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="word-count">0</div>
+                            <div class="stat-label">Words</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="char-count">0</div>
+                            <div class="stat-label">Characters</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="phrase-count">0</div>
+                            <div class="stat-label">Key Phrases</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3><i class="fas fa-key"></i> Key Phrases</h3>
+                        <div id="phrases-list"></div>
+                    </div>
+                    
+                    <div class="result-card">
+                        <h3><i class="fas fa-quote-right"></i> Phrases in Context</h3>
+                        <div id="context-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>   
+     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const loadSampleBtn = document.getElementById('load-sample');
+            const clearBtn = document.getElementById('clear-text');
+            const backBtn = document.getElementById('back-to-input');
+            const textArea = document.getElementById('scientific-text');
+            const inputSection = document.getElementById('input-section');
+            const loadingSection = document.getElementById('loading-section');
+            const resultsSection = document.getElementById('results-section');
+            const phrasesList = document.getElementById('phrases-list');
+            const contextList = document.getElementById('context-list');
+            const wordCount = document.getElementById('word-count');
+            const charCount = document.getElementById('char-count');
+            const phraseCount = document.getElementById('phrase-count');
+            
+            // Sample scientific text
+            const sampleText = `Recent advances in machine learning have revolutionized natural language processing. 
+Transformer models like BERT and GPT have demonstrated remarkable performance on various 
+language understanding tasks. These models leverage attention mechanisms to capture 
+contextual relationships between words. The self-attention mechanism allows the model 
+to weigh the importance of different words in a sentence. Pre-training on large corpora 
+followed by fine-tuning has become the standard approach for many NLP tasks. Transfer 
+learning enables these models to adapt to specific domains with limited labeled data.
+
+Deep learning architectures have shown significant improvements over traditional methods.
+Convolutional neural networks excel at image recognition tasks, while recurrent neural
+networks are well-suited for sequential data. However, transformers have largely replaced
+RNNs for many language tasks due to their ability to process sequences in parallel rather
+than sequentially. This parallelization enables more efficient training on large datasets.
+
+The field of natural language processing continues to evolve rapidly with new architectures
+and pre-training objectives being proposed regularly. Contrastive learning approaches have
+recently gained popularity for representation learning without requiring labeled data.
+
+Quantum computing represents another frontier in computational capabilities. Quantum algorithms
+offer potential speedups for certain classes of problems. Quantum machine learning combines
+quantum computing with machine learning techniques to potentially overcome limitations of
+classical algorithms. Quantum neural networks and variational quantum circuits are being
+explored for various applications including optimization and classification tasks.`;
+            
+            // Event Listeners
+            loadSampleBtn.addEventListener('click', function() {
+                textArea.value = sampleText;
+            });
+            
+            clearBtn.addEventListener('click', function() {
+                textArea.value = '';
+            });
+            
+            backBtn.addEventListener('click', function() {
+                resultsSection.style.display = 'none';
+                inputSection.style.display = 'block';
+            });
+            
+            analyzeBtn.addEventListener('click', function() {
+                const text = textArea.value.trim();
+                
+                if (!text) {
+                    alert('Please enter some scientific text to analyze.');
+                    return;
+                }
+                
+                // Show loading spinner
+                inputSection.style.display = 'none';
+                loadingSection.style.display = 'block';
+                resultsSection.style.display = 'none';
+                
+                // Send text to server for analysis
+                fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading spinner
+                    loadingSection.style.display = 'none';
+                    
+                    // Update statistics
+                    wordCount.textContent = data.stats.word_count;
+                    charCount.textContent = data.stats.char_count;
+                    phraseCount.textContent = data.key_phrases.length;
+                    
+                    // Display key phrases
+                    phrasesList.innerHTML = '';
+                    data.key_phrases.forEach(([phrase, count]) => {
+                        const phraseItem = document.createElement('div');
+                        phraseItem.className = 'phrase-item';
+                        phraseItem.innerHTML = `
+                            <div class="phrase-text">${phrase}</div>
+                            <div class="phrase-count">${count}</div>
+                        `;
+                        phrasesList.appendChild(phraseItem);
+                    });
+                    
+                    // Display context insights
+                    contextList.innerHTML = '';
+                    data.context_insights.forEach(([phrase, count, context]) => {
+                        // Highlight the phrase in the context
+                        const highlightedContext = context.replace(
+                            new RegExp(phrase, 'gi'), 
+                            match => `<span class="highlight">${match}</span>`
+                        );
+                        
+                        const contextItem = document.createElement('div');
+                        contextItem.className = 'context-item';
+                        contextItem.innerHTML = `
+                            <div class="context-phrase">
+                                ${phrase}
+                                <span class="phrase-count">${count}</span>
+                            </div>
+                            <div class="context-text">${highlightedContext}</div>
+                        `;
+                        contextList.appendChild(contextItem);
+                    });
+                    
+                    // Show results
+                    resultsSection.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingSection.style.display = 'none';
+                    inputSection.style.display = 'block';
+                    alert('An error occurred while analyzing the text. Please try again.');
+                });
+            });
+        });
+    </script>
+    </main> -->
+    <section class="analyzer-section" style="padding: 50px 0; background-color: #f5f7fa;">
+        <div class="container">
+            <div class="analyzer-header">
+                <h1>Scientific Key Phrase Extractor</h1>
+                <p>Extract the most important concepts and terminology from your scientific content</p>
+            </div>
+                <div class="analyzer-card" id="input-section">
+                    <h2><i class="fas fa-file-alt"></i> Input Scientific Text</h2>
+                    <label><input type="radio" name="input-type" value="text" checked> Enter Text</label>
+                    <label style="margin: top 20px;"><input type="radio" name="input-type" value="file"> Upload File</label>
+                    
+                    <input type="file" id="file-input" accept=".txt,.pdf,.docx" style="margin-top:5px; display:none;">
+                    <textarea id="scientific-text" placeholder="Paste your scientific text here..."></textarea>
+                    <div class="buttons-container">
+                        <div>
+                            <button id="load-sample" class="button secondary-button">
+                                <i class="fas fa-flask"></i> Load Sample
+                            </button>
+                            <button id="clear-text" class="button danger-button">
+                                <i class="fas fa-trash-alt"></i> Clear
+                            </button>
+                        </div>
+                        <button id="analyze-btn" class="button primary-button">
+                            <i class="fas fa-brain"></i> Extract Key Phrases
+                        </button>
+                    </div>
+                </div>
+    
+                <div class="loading" id="loading-section">
+                    <div class="spinner"></div>
+                    <p>Analyzing your scientific content...</p>
+                </div>
+            <div class="results-section" id="results" style="display:none; margin-top:30px; background:white; padding:20px; border-radius:8px;">
+                <h3>Analysis Results</h3>
+                <div class="stats-section" style="background:#f8f9fa; padding:15px; border-radius:6px; margin-bottom:20px;">
+                    <strong>Word Count:</strong> <span id="word-count">0</span><br>
+                    <strong>Character Count:</strong> <span id="char-count">0</span>
+                </div>
+    
+                <div class="results-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                    <div class="key-phrases">
+                        <h4>Key Phrases</h4>
+                        <div id="phrases-list"></div>
+                    </div>
+                    <div class="context-section">
+                        <h4>Contextual Usage</h4>
+                        <div id="context-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .phrase-item { padding: 5px 0; border-bottom: 1px solid #eee; }
+    .context-item { margin-bottom: 15px; }
+    .context-text { background-color: #ecf0f1; padding: 10px; border-radius: 4px; font-size: 0.9em; }
+    </style>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const loadSampleBtn = document.getElementById('load-sample');
+        const clearBtn = document.getElementById('clear-text');
+        const textArea = document.getElementById('scientific-text');
+        const results = document.getElementById('results');
+        const phrasesList = document.getElementById('phrases-list');
+        const contextList = document.getElementById('context-list');
+        const wordCount = document.getElementById('word-count');
+        const charCount = document.getElementById('char-count');
+        const loading = document.querySelector('.loading');
+        const inputTypeRadios = document.querySelectorAll('input[name="input-type"]');
+const fileInput = document.getElementById('file-input');
+
+inputTypeRadios.forEach(radio => {
+    radio.addEventListener('change', function () {
+        if (this.value === 'file') {
+            textArea.style.display = 'none';
+            fileInput.style.display = 'block';
+        } else {
+            textArea.style.display = 'block';
+            fileInput.style.display = 'none';
+        }
+    });
+});
+
+fileInput.addEventListener('change', async function () {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    const extension = file.name.split('.').pop().toLowerCase();
+
+    if (extension === 'txt') {
+        reader.onload = function (e) {
+            textArea.value = e.target.result;
+        };
+        reader.readAsText(file);
+    } else if (extension === 'pdf') {
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+        const typedarray = new Uint8Array(await file.arrayBuffer());
+        const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+        let text = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(item => item.str).join(' ') + '\n';
+        }
+        textArea.value = text.trim();
+    } else if (extension === 'docx') {
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = new JSZip();
+        const loadedZip = await zip.loadAsync(arrayBuffer);
+        const docXml = await loadedZip.file("word/document.xml").async("string");
+
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(docXml, "application/xml");
+        const texts = xmlDoc.getElementsByTagName("w:t");
+        let docText = '';
+        for (let t of texts) {
+            docText += t.textContent + ' ';
+        }
+        textArea.value = docText.trim();
+    } else {
+        alert('Unsupported file type.');
+    }
+});
+
+
+    
+        const sampleText = `Recent advances in machine learning have revolutionized natural language processing. 
+Transformer models like BERT and GPT have demonstrated remarkable performance on various 
+language understanding tasks. These models leverage attention mechanisms to capture 
+contextual relationships between words. The self-attention mechanism allows the model 
+to weigh the importance of different words in a sentence. Pre-training on large corpora 
+followed by fine-tuning has become the standard approach for many NLP tasks. Transfer 
+learning enables these models to adapt to specific domains with limited labeled data.
+
+Deep learning architectures have shown significant improvements over traditional methods.
+Convolutional neural networks excel at image recognition tasks, while recurrent neural
+networks are well-suited for sequential data. However, transformers have largely replaced
+RNNs for many language tasks due to their ability to process sequences in parallel rather
+than sequentially. This parallelization enables more efficient training on large datasets.
+
+The field of natural language processing continues to evolve rapidly with new architectures
+and pre-training objectives being proposed regularly. Contrastive learning approaches have
+recently gained popularity for representation learning without requiring labeled data.
+
+Quantum computing represents another frontier in computational capabilities. Quantum algorithms
+offer potential speedups for certain classes of problems. Quantum machine learning combines
+quantum computing with machine learning techniques to potentially overcome limitations of
+classical algorithms. Quantum neural networks and variational quantum circuits are being
+explored for various applications including optimization and classification tasks.`;
+    
+        function extractKeyPhrases(text) {
+            const words = text.toLowerCase().match(/\b[a-z]{4,}\b/g);
+            if (!words) return [];
+    
+            const frequency = {};
+            for (let i = 0; i < words.length; i++) {
+                const phrase = words.slice(i, i + 2).join(' ');
+                frequency[phrase] = (frequency[phrase] || 0) + 1;
+            }
+            return Object.entries(frequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+        }
+    
+        function extractContexts(text, phrases) {
+            const lines = text.split(/\n+/);
+            const results = [];
+            phrases.forEach(([phrase]) => {
+                lines.forEach(line => {
+                    if (line.toLowerCase().includes(phrase)) {
+                        results.push({ phrase, text: line.trim() });
+                    }
+                });
+            });
+            return results;
+        }
+    
+        analyzeBtn.addEventListener('click', () => {
+            const text = textArea.value.trim();
+            if (!text){ alert('Please enter some text to analyze..'); 
+            return;
+        }
+    
+            loading.style.display = 'block';
+            results.style.display = 'none';
+    
+            setTimeout(() => {
+                const phrases = extractKeyPhrases(text);
+                const contexts = extractContexts(text, phrases);
+    
+                wordCount.textContent = text.split(/\s+/).length;
+                charCount.textContent = text.length;
+    
+                phrasesList.innerHTML = phrases.map(([p, c]) => `<div class="phrase-item"><strong>${p}</strong> <span style="color:#888;">(${c})</span></div>`).join('');
+                contextList.innerHTML = contexts.map(ctx => `<div class="context-item"><div class="context-text"><strong>${ctx.phrase}</strong>: ${ctx.text}</div></div>`).join('');
+    
+                loading.style.display = 'none';
+                results.style.display = 'block';
+            }, 500);
+        });
+    
+        loadSampleBtn.addEventListener('click', () => {
+            textArea.value = sampleText;
+        });
+    
+        clearBtn.addEventListener('click', () => {
+            textArea.value = '';
+            results.style.display = 'none';
+        });
+    });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
+
+        </main>
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Powerful Features</h2>
+                <p>Discover how SciPhrase can help you extract meaningful insights from scientific content</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Smart Extraction</h3>
+                    <p>Our algorithm identifies key phrases using advanced NLP techniques, prioritizing domain-specific terminology over common words.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Weighted Analysis</h3>
+                    <p>Multi-word phrases receive higher weights, ensuring that complex scientific concepts are properly recognized and prioritized.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3>Contextual Insights</h3>
+                    <p>View key phrases in their original context to better understand how they're used within the document.</p>
+                </div>
+            </div><button class="back-btn"><a href="#tohome">BACK</a></button>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+                <p>SciPhrase uses a sophisticated process to extract meaningful key phrases</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Input Your Text</h3>
+                        <p>Paste your scientific content into the analyzer - from research papers to technical documentation.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>NLP Processing</h3>
+                        <p>Our algorithm cleans the text, removes common words, and identifies potential key phrases using n-gram extraction.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Phrase Weighting</h3>
+                        <p>Phrases are weighted based on frequency and length, with multi-word scientific concepts receiving higher priority.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Review Results</h3>
+                        <p>Examine the extracted key phrases and their context to quickly identify the most important concepts in your document.</p>
+                    </div>
+                </div>
+            </div><button class="back-btn"><a href="#tohome">BACK</a></button>
+        </div>
+    </section>
+</main>
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>SciPhrase</h2>
+                    <p>Advanced key phrase extraction for scientific and technical content using NLP techniques.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-links-column">
+                        <h3>Quick Links</h3>
+                        <ul>
+                            <li><a href="./index.html">Home</a></li>
+                            <li><a href="./analyzer.html">Analyzer</a></li>
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#how-it-works">How It Works</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-links-column">
+                        <h3>Resources</h3>
+                        <ul>
+                            <li><a href="#">Documentation</a></li>
+                            <li><a href="#">API</a></li>
+                            <li><a href="#">Examples</a></li>
+                            <li><a href="#">Blog</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 SciPhrase. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+
+    
+</body>
+</html>
